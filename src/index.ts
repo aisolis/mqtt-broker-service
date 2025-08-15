@@ -131,6 +131,18 @@ app.post('/device/command', async (req: Request<{}, CommandResponse | ErrorRespo
   });
 });
 
+app.get('/health', (req: Request, res: Response) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    services: {
+      mqtt: client.connected,
+      redis: 'connected'
+    }
+  });
+});
+
 app.get('/device/status', async (req: Request, res: Response) => {
   try {
     const state = await getDeviceState();
