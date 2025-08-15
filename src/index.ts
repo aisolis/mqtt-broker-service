@@ -1,6 +1,7 @@
+import 'dotenv/config';
 import mqtt from 'mqtt';
 import express, { Request, Response } from 'express';
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 
 const app = express();
 app.use(express.json());
@@ -28,11 +29,16 @@ interface ErrorResponse {
   valid_commands: string[];
 }
 
+const redis = new Redis({
+  url: process.env.KV_REST_API_URL!,
+  token: process.env.KV_REST_API_TOKEN!,
+});
+
 const DEVICE_STATE_KEY = 'device:state';
 
 const getDeviceState = async (): Promise<DeviceState> => {
   try {
-    const state = await kv.hgetall(DEVICE_STATE_KEY) as DeviceState;
+    const state = await redis.hgetall(DEVICE_STATE_KEY);
     if (!state || Object.keys(state).length === 0) {
       return {
         isLocked: false,
@@ -40,7 +46,13 @@ const getDeviceState = async (): Promise<DeviceState> => {
         lastUpdate: new Date().toISOString()
       };
     }
-    return state;
+    
+    return {
+      isLocked: state.isLocked === 'true' || state.isLocked === true,
+      hasPower: state.hasPower === 'true' || state.hasPower === true,
+      lastUpdate: state.lastUpdate as string || new Date().toISOString(),
+      lastCommand: state.lastCommand as string
+    };
   } catch (error) {
     console.error('Error getting device state:', error);
     return {
@@ -59,7 +71,7 @@ const saveDeviceState = async (state: Partial<DeviceState>): Promise<void> => {
       ...state,
       lastUpdate: new Date().toISOString()
     };
-    await kv.hset(DEVICE_STATE_KEY, newState);
+    await redis.hset(DEVICE_STATE_KEY, newState);
   } catch (error) {
     console.error('Error saving device state:', error);
   }
