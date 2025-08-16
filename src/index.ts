@@ -129,7 +129,7 @@ app.post('/device/command', async (req: Request<{}, CommandResponse | ErrorRespo
     });
   }
   
-  client.publish('device/cmd', command);
+  client.publish('device/cmd', command, { qos: 1, retain: true });
   
   await saveDeviceState({ 
     lastCommand: command,
