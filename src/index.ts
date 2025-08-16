@@ -21,6 +21,7 @@ const client = mqtt.connect('mqtt://broker.hivemq.com');
 interface DeviceState {
   isLocked: boolean;
   hasPower: boolean;
+  panic: boolean;
   lastUpdate: string;
   lastCommand?: string;
 }
@@ -53,6 +54,7 @@ const getDeviceState = async (): Promise<DeviceState> => {
       return {
         isLocked: false,
         hasPower: true,
+        panic: false,
         lastUpdate: new Date().toISOString()
       };
     }
@@ -60,6 +62,7 @@ const getDeviceState = async (): Promise<DeviceState> => {
     return {
       isLocked: state.isLocked === 'true' || state.isLocked === true,
       hasPower: state.hasPower === 'true' || state.hasPower === true,
+      panic: state.panic === 'true' || state.panic === true,
       lastUpdate: state.lastUpdate as string || new Date().toISOString(),
       lastCommand: state.lastCommand as string
     };
@@ -68,6 +71,7 @@ const getDeviceState = async (): Promise<DeviceState> => {
     return {
       isLocked: false,
       hasPower: true,
+      panic: false,
       lastUpdate: new Date().toISOString()
     };
   }
@@ -116,7 +120,7 @@ client.on('message', async (topic: string, message: Buffer) => {
 app.post('/device/command', async (req: Request<{}, CommandResponse | ErrorResponse, CommandRequest>, res: Response<CommandResponse | ErrorResponse>) => {
   const { command } = req.body;
   
-  const validCommands: string[] = ['lock', 'unlock', 'disconnect', 'reconnect'];
+  const validCommands: string[] = ['lock', 'unlock', 'disconnect', 'reconnect', 'panic', 'no-panic'];
   
   if (!validCommands.includes(command)) {
     return res.status(400).json({ 
@@ -132,7 +136,9 @@ app.post('/device/command', async (req: Request<{}, CommandResponse | ErrorRespo
     ...(command === 'lock' && { isLocked: true }),
     ...(command === 'unlock' && { isLocked: false }),
     ...(command === 'disconnect' && { hasPower: false }),
-    ...(command === 'reconnect' && { hasPower: true })
+    ...(command === 'reconnect' && { hasPower: true }),
+    ...(command === 'panic' && { panic: true }),
+    ...(command === 'no-panic' && { panic: false })
   });
   
   res.json({ 
