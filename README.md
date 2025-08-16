@@ -7,8 +7,10 @@ Servicio Node.js con TypeScript para enviar comandos a dispositivos IoT vía MQT
 - ✅ API REST para enviar comandos MQTT
 - ✅ Persistencia de estado en Upstash Redis
 - ✅ Monitoreo de respuestas del dispositivo
+- ✅ Health check endpoint para monitoreo
 - ✅ Compatible con Vercel (Serverless)
 - ✅ TypeScript con tipado completo
+- ✅ Documentación completa de API
 
 ## 📋 Requisitos
 
@@ -257,6 +259,7 @@ interface DeviceState {
 npm run dev
 
 # Terminal 2: Probar endpoints
+curl http://localhost:3000/health
 curl http://localhost:3000/device/status
 curl -X POST http://localhost:3000/device/command -H "Content-Type: application/json" -d '{"command": "lock"}'
 ```
@@ -265,6 +268,9 @@ curl -X POST http://localhost:3000/device/command -H "Content-Type: application/
 ```bash
 # Reemplaza con tu URL de Vercel
 export API_URL="https://tu-app.vercel.app"
+
+# Health check
+curl $API_URL/health
 
 # Consultar estado
 curl $API_URL/device/status

@@ -1,9 +1,19 @@
 import 'dotenv/config';
 import mqtt from 'mqtt';
 import express, { Request, Response } from 'express';
+import cors from 'cors';
 import { Redis } from '@upstash/redis';
 
 const app = express();
+
+// Configurar CORS para permitir peticiones desde cualquier origen
+app.use(cors({
+  origin: true, // Permite cualquier origen
+  credentials: true, // Permite cookies y headers de autenticación
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
 app.use(express.json());
 
 const client = mqtt.connect('mqtt://broker.hivemq.com');
